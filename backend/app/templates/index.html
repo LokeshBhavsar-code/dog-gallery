@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dog Gallery</title>
+    <script>
+        (function () {
+            window.tailwind = window.tailwind || {};
+            window.tailwind.config = { darkMode: "class" };
+            try {
+                const saved = localStorage.getItem("theme");
+                if (saved === "dark") document.documentElement.classList.add("dark");
+                if (saved === "light") document.documentElement.classList.remove("dark");
+            } catch (e) {}
+        })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: "class" };
+    </script>
+    <style>
+        .scroll-area {
+            scrollbar-width: thin;
+            scrollbar-color: #94a3b8 transparent;
+        }
+        .scroll-area::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        .scroll-area::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 9999px;
+        }
+        .dark .scroll-area::-webkit-scrollbar-thumb {
+            background: #475569;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+<nav class="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur dark:border-slate-800 dark:bg-slate-900/95">
+    <div class="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-4 sm:px-6">
+        <h2 class="text-lg font-semibold tracking-tight sm:text-xl">Dog Gallery</h2>
+        <div class="flex items-center gap-2">
+            <button
+                id="themeToggle"
+                class="rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium transition hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+            >
+                Dark Mode
+            </button>
+            <a
+                href="/likes-page"
+                class="rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium transition hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+            >
+                Liked Images
+            </a>
+        </div>
+    </div>
+</nav>
+
+<main class="mx-auto w-full max-w-7xl space-y-6 px-4 py-6 sm:px-6 sm:py-8">
+    <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
+        <h3 class="mb-3 text-base font-semibold">Recently Viewed</h3>
+        <div id="recentContainer" class="scroll-area flex gap-3 overflow-x-auto pb-1"></div>
+    </section>
+
+    <section class="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:grid-cols-3 sm:p-5">
+        <select
+            id="filterSelect"
+            class="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none ring-slate-300 transition focus:ring dark:border-slate-700 dark:bg-slate-800"
+        >
+            <option value="all">All Breeds</option>
+            <option value="liked">Liked Breeds</option>
+            <option value="viewed">Recently Viewed</option>
+        </select>
+
+        <select
+            id="sortSelect"
+            class="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none ring-slate-300 transition focus:ring dark:border-slate-700 dark:bg-slate-800"
+        >
+            <option value="az">A-Z</option>
+            <option value="za">Z-A</option>
+            <option value="mostliked">Most Liked</option>
+        </select>
+
+        <input
+            type="text"
+            id="searchInput"
+            placeholder="Search dog breed..."
+            class="rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none ring-slate-300 transition focus:ring dark:border-slate-700 dark:bg-slate-800"
+        />
+    </section>
+
+    <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
+        <div id="breedScrollArea" class="scroll-area max-h-[62vh] overflow-y-auto pr-1">
+            <div id="breedGrid" class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5"></div>
+        </div>
+
+        <div class="mt-5 flex justify-center">
+            <button
+                id="loadMoreBtn"
+                class="rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-300"
+            >
+                Refresh
+            </button>
+        </div>
+        <div class="mt-3 flex justify-center gap-2">
+            <button
+                id="scrollTopBtn"
+                class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium transition hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+            >
+                Scroll Top
+            </button>
+            <button
+                id="scrollBottomBtn"
+                class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium transition hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+            >
+                Scroll Bottom
+            </button>
+        </div>
+    </section>
+</main>
+
+<div
+    id="breedModal"
+    class="fixed inset-0 z-40 hidden items-center justify-center bg-slate-900/60 p-4"
+>
+    <div class="w-full max-w-2xl rounded-2xl bg-white p-4 shadow-xl dark:bg-slate-900 sm:p-6">
+        <div class="mb-4 flex items-start justify-between">
+            <div>
+                <h3 id="modalBreedTitle" class="text-xl font-semibold"></h3>
+                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Preview breed details before opening gallery.</p>
+            </div>
+            <button
+                id="closeBreedModal"
+                class="rounded-lg border border-slate-300 px-2 py-1 text-sm transition hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+            >
+                Close
+            </button>
+        </div>
+
+        <div id="modalPreviewGrid" class="grid grid-cols-2 gap-3 sm:grid-cols-4"></div>
+
+        <div class="mt-5 flex flex-wrap gap-2">
+            <button
+                id="modalOpenBtn"
+                class="rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-300"
+            >
+                Open Gallery
+            </button>
+            <button
+                id="modalShareBtn"
+                class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium transition hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+            >
+                Share
+            </button>
+            <button
+                id="modalCopyBtn"
+                class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium transition hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+            >
+                Copy Link
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="toastContainer" class="fixed right-4 top-4 z-50 space-y-2"></div>
+
+<script src="/static/js/main.js" defer></script>
+<script>
+    (function () {
+        const root = document.documentElement;
+        const saved = localStorage.getItem("theme");
+        if (saved === "dark") root.classList.add("dark");
+        if (saved === "light") root.classList.remove("dark");
+
+        const btn = document.getElementById("themeToggle");
+        if (!btn) return;
+
+        const syncText = () => {
+            btn.innerText = root.classList.contains("dark") ? "Light Mode" : "Dark Mode";
+        };
+
+        btn.addEventListener("click", () => {
+            root.classList.toggle("dark");
+            localStorage.setItem("theme", root.classList.contains("dark") ? "dark" : "light");
+            syncText();
+        });
+
+        syncText();
+    })();
+</script>
+</body>
+</html>
